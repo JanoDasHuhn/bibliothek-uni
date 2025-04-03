@@ -1,4 +1,4 @@
-include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -13,14 +13,14 @@ struct Buch {
     float aktueller_preis;
 };
 
-bool is_valid_isbn(const char isbn) {
-    if (isbn == NULL) return false;
+bool is_valid_isbn(const char *isbn) {
+    if (isbn == NULL || *isbn == '\0') return false;
     int len = strlen(isbn);
     return (len == 10 || len == 13);
 }
 
 int main() {
-    FILE file = fopen("buchliste_origin.csv", "r"); // Datei im Lesemodus öffnen
+    FILE* file = fopen("buchliste_origin.csv", "r"); // Datei im Lesemodus öffnen
     if (file == NULL) {
         printf("Fehler beim Öffnen der Datei!\n");
         return 1;
