@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define MAX_BUCHER 6200
+#define MAX_BUCHER 6100
 
 struct Buch {
     char autor[100];
@@ -41,6 +41,7 @@ int extract_year(const char *date_str) {
 }
 
 int main() {
+    int total_books = 0;
     FILE* file = fopen("buchliste_origin.csv", "r"); // Datei im Lesemodus öffnen
     if (file == NULL) {
         printf("Fehler beim Öffnen der Datei!\n");
@@ -55,6 +56,8 @@ int main() {
         fclose(file);
         return 1;
     }
+
+
 
     while (fgets(line, sizeof(line), file) && count < MAX_BUCHER) {
         struct Buch buch;
@@ -79,6 +82,7 @@ int main() {
                 buch.aktueller_preis = atof(preis_str);
             }
             buecher[count++] = buch;
+
         }
     }
     fclose(file);
@@ -95,32 +99,95 @@ int main() {
             printf("Aktueller Preis: %.2f EUR\n", buecher[i].aktueller_preis);
         }
     }
-    FILE *outputFile = fopen("neue_buchliste.csv", "w");
-    if (outputFile == NULL) {
-        printf("Fehler beim Erstellen der Ausgabedatei!\n");
-        return 1;
-    }
+    int choice;
+    do {
+        printf("\n--- Buchverwaltung ---\n");
+        printf("1. Buch hinzufugen\n");
+        printf("2. Buch loschen\n");
+        printf("3. Alle Bucher anzeigen\n");
+        printf("0. Beenden\n");
+        printf("Auswahl: ");
+        scanf("%d", &choice);
+        getchar();
 
-    // Header in die neue CSV-Datei schreiben
-    fprintf(outputFile, "Autor;Erscheinungsjahr;Titel;ISBN;Aktueller_Preis\n");
+        if (choice == 1) {
+            if (count < MAX_BUCHER) {
+                struct Buch neues_buch;
+                printf("Autor: ");
+                fgets(neues_buch.autor, sizeof(neues_buch.autor), stdin);
+                neues_buch.autor[strcspn(neues_buch.autor, "\n")] = 0;
 
-    // Jeden Datensatz im CSV-Format in die Datei schreiben
-    for (int i = 0; i < count; i++) {
-        if (buecher[i].aktueller_preis == -1.0) {
-            fprintf(outputFile, "%s;%d;\"%s\";%s;Unbekannt\n",
-                    buecher[i].autor,
-                    buecher[i].erscheinungsjahr,
-                    buecher[i].titel,
-                    (strlen(buecher[i].isbn) > 0) ? buecher[i].isbn : "Unbekannt");
-        } else {
-            fprintf(outputFile, "%s;%d;\"%s\";%s;%.2f\n",
-                    buecher[i].autor,
-                    buecher[i].erscheinungsjahr,
-                    buecher[i].titel,
-                    (strlen(buecher[i].isbn) > 0) ? buecher[i].isbn : "Unbekannt",
-                    buecher[i].aktueller_preis);
+                char erscheinung[20];
+                printf("Erscheinungsdatum (TT.MM.JJJJ): ");
+                fgets(erscheinung, sizeof(erscheinung), stdin);
+                neues_buch.erscheinungsjahr = extract_year(erscheinung);
+
+                printf("Titel: ");
+                fgets(neues_buch.titel, sizeof(neues_buch.titel), stdin);
+                neues_buch.titel[strcspn(neues_buch.titel, "\n")] = 0;
+
+                printf("ISBN: ");
+                fgets(neues_buch.isbn, sizeof(neues_buch.isbn), stdin);
+                neues_buch.isbn[strcspn(neues_buch.isbn, "\n")] = 0;
+
+                char preis[20];
+                printf("Preis (z.B. 12.99 oder 'Unbekannt'): ");
+                fgets(preis, sizeof(preis), stdin);
+                preis[strcspn(preis, "\n")] = 0;
+                replace_comma_with_dot(preis);
+
+                if (strcmp(preis, "Unbekannt") == 0) {
+                    neues_buch.aktueller_preis = -1.0;
+                } else {
+                    neues_buch.aktueller_preis = atof(preis);
+                }
+
+                buecher[count++] = neues_buch;
+                printf("✅ Buch hinzugefugt!\n");
+            } else {
+                printf("❌ Maximale Anzahl erreicht!\n");
+            }
+
+        } else if (choice == 2) {
+            char suchbegriff[200];
+            printf("Gib den Titel oder die ISBN des zu loschenden Buchs ein: ");
+            fgets(suchbegriff, sizeof(suchbegriff), stdin);
+            suchbegriff[strcspn(suchbegriff, "\n")] = 0;
+
+            bool gefunden = false;
+            for (int i = 0; i < count; i++) {
+                if (strcmp(buecher[i].titel, suchbegriff) == 0 || strcmp(buecher[i].isbn, suchbegriff) == 0) {
+                    for (int j = i; j < count - 1; j++) {
+                        buecher[j] = buecher[j + 1];
+                    }
+                    count--;
+                    gefunden = true;
+                    printf("🗑️ Buch geloscht!\n");
+                    break;
+                }
+            }
+            if (!gefunden) {
+                printf("❗ Kein Buch mit diesem Titel oder dieser ISBN gefunden.\n");
+            }
+
+        } else if (choice == 3) {
+            for (int i = 0; i < count; i++) {
+                printf("\nBuch %d:\n", i + 1);
+                printf("Autor: %s\n", buecher[i].autor);
+                printf("Erscheinungsjahr: %d\n", buecher[i].erscheinungsjahr);
+                printf("Titel: %s\n", buecher[i].titel);
+                printf("ISBN: %s\n", (strlen(buecher[i].isbn) > 0) ? buecher[i].isbn : "Unbekannt");
+                if (buecher[i].aktueller_preis == -1.0) {
+                    printf("Aktueller Preis: Unbekannt\n");
+                } else {
+                    printf("Aktueller Preis: %.2f EUR\n", buecher[i].aktueller_preis);
+                }
+            }
         }
-    }
-    fclose(outputFile);
+
+    } while (choice != 0);
+
+    return 0;
+
     return 0;
 }
