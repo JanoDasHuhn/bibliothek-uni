@@ -15,7 +15,8 @@
   "files.associations": {
     ".clang*": "yaml",
     "*.hpp.in": "cpp",
-    "*.in": "cpp"
+    "*.in": "cpp",
+    "stdbool.h": "c"
   },
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
