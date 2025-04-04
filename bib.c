@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define MAX_BUCHER 100
+#define MAX_BUCHER 6200
 
 struct Buch {
     char autor[100];
@@ -95,6 +95,32 @@ int main() {
             printf("Aktueller Preis: %.2f EUR\n", buecher[i].aktueller_preis);
         }
     }
+    FILE *outputFile = fopen("neue_buchliste.csv", "w");
+    if (outputFile == NULL) {
+        printf("Fehler beim Erstellen der Ausgabedatei!\n");
+        return 1;
+    }
 
+    // Header in die neue CSV-Datei schreiben
+    fprintf(outputFile, "Autor;Erscheinungsjahr;Titel;ISBN;Aktueller_Preis\n");
+
+    // Jeden Datensatz im CSV-Format in die Datei schreiben
+    for (int i = 0; i < count; i++) {
+        if (buecher[i].aktueller_preis == -1.0) {
+            fprintf(outputFile, "%s;%d;\"%s\";%s;Unbekannt\n",
+                    buecher[i].autor,
+                    buecher[i].erscheinungsjahr,
+                    buecher[i].titel,
+                    (strlen(buecher[i].isbn) > 0) ? buecher[i].isbn : "Unbekannt");
+        } else {
+            fprintf(outputFile, "%s;%d;\"%s\";%s;%.2f\n",
+                    buecher[i].autor,
+                    buecher[i].erscheinungsjahr,
+                    buecher[i].titel,
+                    (strlen(buecher[i].isbn) > 0) ? buecher[i].isbn : "Unbekannt",
+                    buecher[i].aktueller_preis);
+        }
+    }
+    fclose(outputFile);
     return 0;
 }
