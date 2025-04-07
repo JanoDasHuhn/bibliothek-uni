@@ -9,7 +9,7 @@ struct Buch {
     char autor[100];
     int erscheinungsjahr;
     char titel[200];
-    char isbn[14]; // 13 Zeichen + Nullterminierung
+    char isbn[14];
     float aktueller_preis;
 };
 
@@ -23,9 +23,8 @@ void replace_comma_with_dot(char *str) {
 
 int extract_year(const char *date_str) {
     int day, month, year;
-    // Entferne führende Leerzeichen
     while (*date_str == ' ') date_str++;
-    if (strlen(date_str) < 8) return -1;  // Zu kurz für ein gültiges Datum
+    if (strlen(date_str) < 8) return -1;
     if (sscanf(date_str, "%d.%d.%d", &day, &month, &year) == 3) {
         if (year >= 1000 && year <= 9999) {
             return year;
@@ -35,14 +34,12 @@ int extract_year(const char *date_str) {
     return -1;
 }
 
-// Funktion zum Schreiben der Buchliste in eine neue Datei
 void write_books_to_file(struct Buch buecher[], int count, const char *filename) {
     FILE *outfile = fopen(filename, "w");
     if (outfile == NULL) {
-        printf("Fehler beim Öffnen der Datei %s zum Schreiben!\n", filename);
+        printf("Fehler beim Offnen der Datei %s zum Schreiben!\n", filename);
         return;
     }
-    // Schreibe Header in die Datei
     fprintf(outfile, "Autor;Erscheinungsjahr;Titel;ISBN;aktueller_preis\n");
     for (int i = 0; i < count; i++) {
         fprintf(outfile, "%s;%d;\"%s\";%s;",
@@ -62,7 +59,7 @@ void write_books_to_file(struct Buch buecher[], int count, const char *filename)
 int main() {
     FILE* file = fopen("buchliste_origin.csv", "r");
     if (file == NULL) {
-        printf("Fehler beim Öffnen der Datei buchliste_origin.csv!\n");
+        printf("Fehler beim Offnen der Datei buchliste_origin.csv!\n");
         return 1;
     }
 
@@ -70,7 +67,6 @@ int main() {
     int count = 0;
     char line[256];
 
-    // Überspringe die Header-Zeile
     if (fgets(line, sizeof(line), file) == NULL) {
         printf("Fehler beim Lesen der Header-Zeile!\n");
         fclose(file);
@@ -79,8 +75,8 @@ int main() {
 
     while (fgets(line, sizeof(line), file) && count < MAX_BUCHER) {
         struct Buch buch;
-        char date_str[20];   // Für das Erscheinungsdatum
-        char preis_str[20];  // Für den Preis
+        char date_str[20];
+        char preis_str[20];
         char titel_temp[200];
 
         if (sscanf(line, "%99[^;];%19[^;];\"%199[^\"]\";%13[^;];%19s",
@@ -98,29 +94,17 @@ int main() {
     }
     fclose(file);
 
-    // Anzeige der eingelesenen Bücher
-    for (int i = 0; i < count; i++) {
-        printf("\nBuch %d:\n", i + 1);
-        printf("Autor: %s\n", buecher[i].autor);
-        printf("Erscheinungsjahr: %d\n", buecher[i].erscheinungsjahr);
-        printf("Titel: %s\n", buecher[i].titel);
-        printf("ISBN: %s\n", (strlen(buecher[i].isbn) > 0 ? buecher[i].isbn : "Unbekannt"));
-        if (buecher[i].aktueller_preis == -1.0)
-            printf("Aktueller Preis: Unbekannt\n");
-        else
-            printf("Aktueller Preis: %.2f EUR\n", buecher[i].aktueller_preis);
-    }
-
     int choice;
     do {
         printf("\n--- Buchverwaltung ---\n");
         printf("1. Buch hinzufuegen\n");
         printf("2. Buch loeschen\n");
         printf("3. Alle Buecher anzeigen\n");
+        printf("4. Buecher suchen\n");
         printf("0. Beenden\n");
         printf("Auswahl: ");
         scanf("%d", &choice);
-        getchar(); // Puffer leeren
+        getchar();
 
         if (choice == 1) {
             if (count < MAX_BUCHER) {
@@ -192,11 +176,82 @@ int main() {
                 else
                     printf("Aktueller Preis: %.2f EUR\n", buecher[i].aktueller_preis);
             }
+        } else if (choice == 4) {
+            int suchwahl;
+            char suchtext[200];
+            float suchpreis;
+            int suchjahr;
+            bool gefunden = false;
+
+            printf("\nNach welchem Kriterium moechten Sie suchen?\n");
+            printf("1. Autor\n2. Erscheinungsjahr\n3. Titel\n4. ISBN\n5. Preis\nAuswahl: ");
+            scanf("%d", &suchwahl);
+            getchar();
+
+            switch (suchwahl) {
+                case 1:
+                    printf("Autor eingeben: ");
+                    fgets(suchtext, sizeof(suchtext), stdin);
+                    suchtext[strcspn(suchtext, "\n")] = 0;
+                    for (int i = 0; i < count; i++) {
+                        if (strstr(buecher[i].autor, suchtext)) {
+                            gefunden = true;
+                            printf("\nAutor: %s\nTitel: %s\n", buecher[i].autor, buecher[i].titel);
+                        }
+                    }
+                    break;
+                case 2:
+                    printf("Erscheinungsjahr eingeben: ");
+                    scanf("%d", &suchjahr);
+                    for (int i = 0; i < count; i++) {
+                        if (buecher[i].erscheinungsjahr == suchjahr) {
+                            gefunden = true;
+                            printf("\nAutor: %s\nTitel: %s\n", buecher[i].autor, buecher[i].titel);
+                        }
+                    }
+                    break;
+                case 3:
+                    printf("Titel eingeben: ");
+                    fgets(suchtext, sizeof(suchtext), stdin);
+                    suchtext[strcspn(suchtext, "\n")] = 0;
+                    for (int i = 0; i < count; i++) {
+                        if (strstr(buecher[i].titel, suchtext)) {
+                            gefunden = true;
+                            printf("\nAutor: %s\nTitel: %s\n", buecher[i].autor, buecher[i].titel);
+                        }
+                    }
+                    break;
+                case 4:
+                    printf("ISBN eingeben: ");
+                    fgets(suchtext, sizeof(suchtext), stdin);
+                    suchtext[strcspn(suchtext, "\n")] = 0;
+                    for (int i = 0; i < count; i++) {
+                        if (strcmp(buecher[i].isbn, suchtext) == 0) {
+                            gefunden = true;
+                            printf("\nAutor: %s\nTitel: %s\n", buecher[i].autor, buecher[i].titel);
+                        }
+                    }
+                    break;
+                case 5:
+                    printf("Preis eingeben (z.B. 12.99): ");
+                    scanf("%f", &suchpreis);
+                    for (int i = 0; i < count; i++) {
+                        if (buecher[i].aktueller_preis == suchpreis) {
+                            gefunden = true;
+                            printf("\nAutor: %s\nTitel: %s\n", buecher[i].autor, buecher[i].titel);
+                        }
+                    }
+                    break;
+                default:
+                    printf("❌ Ungueltige Auswahl.\n");
+                    break;
+            }
+            if (!gefunden) {
+                printf("🔍 Kein passendes Buch gefunden.\n");
+            }
         }
     } while (choice != 0);
 
-    // Nach Beendigung der Interaktion wird die aktualisierte Liste in eine neue Datei geschrieben.
     write_books_to_file(buecher, count, "buchliste_neu.csv");
-
     return 0;
 }
