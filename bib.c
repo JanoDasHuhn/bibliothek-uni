@@ -1,60 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-
-#define MAX_BUCHER 6100
-
-struct Buch {
-    char autor[100];
-    int erscheinungsjahr;
-    char titel[200];
-    char isbn[14];
-    float aktueller_preis;
-};
-
-void replace_comma_with_dot(char *str) {
-    for (int i = 0; str[i] != '\0'; i++) {
-        if (str[i] == ',') {
-            str[i] = '.';
-        }
-    }
-}
-
-int extract_year(const char *date_str) {
-    int day, month, year;
-    while (*date_str == ' ') date_str++;
-    if (strlen(date_str) < 8) return -1;
-    if (sscanf(date_str, "%d.%d.%d", &day, &month, &year) == 3) {
-        if (year >= 1000 && year <= 9999) {
-            return year;
-        }
-    }
-    printf("Warnung: Konnte Erscheinungsjahr nicht extrahieren: %s\n", date_str);
-    return -1;
-}
-
-void write_books_to_file(struct Buch buecher[], int count, const char *filename) {
-    FILE *outfile = fopen(filename, "w");
-    if (outfile == NULL) {
-        printf("Fehler beim Offnen der Datei %s zum Schreiben!\n", filename);
-        return;
-    }
-    fprintf(outfile, "Autor;Erscheinungsjahr;Titel;ISBN;aktueller_preis\n");
-    for (int i = 0; i < count; i++) {
-        fprintf(outfile, "%s;%d;\"%s\";%s;",
-                buecher[i].autor,
-                buecher[i].erscheinungsjahr,
-                buecher[i].titel,
-                (strlen(buecher[i].isbn) > 0 ? buecher[i].isbn : "Unbekannt"));
-        if (buecher[i].aktueller_preis == -1.0)
-            fprintf(outfile, "Unbekannt\n");
-        else
-            fprintf(outfile, "%.2f\n", buecher[i].aktueller_preis);
-    }
-    fclose(outfile);
-    printf("Die aktualisierte Buchliste wurde in \"%s\" gespeichert.\n", filename);
-}
+#include "buch.h"
 
 int main() {
     FILE* file = fopen("buchliste_origin.csv", "r");
@@ -67,11 +14,7 @@ int main() {
     int count = 0;
     char line[256];
 
-    if (fgets(line, sizeof(line), file) == NULL) {
-        printf("Fehler beim Lesen der Header-Zeile!\n");
-        fclose(file);
-        return 1;
-    }
+    fgets(line, sizeof(line), file); // Header-Zeile ignorieren
 
     while (fgets(line, sizeof(line), file) && count < MAX_BUCHER) {
         struct Buch buch;
@@ -84,16 +27,13 @@ int main() {
             buch.erscheinungsjahr = extract_year(date_str);
             strcpy(buch.titel, titel_temp);
             replace_comma_with_dot(preis_str);
-            if (strcmp(preis_str, "Unbekannt") == 0) {
-                buch.aktueller_preis = -1.0;
-            } else {
-                buch.aktueller_preis = atof(preis_str);
-            }
+            buch.aktueller_preis = (strcmp(preis_str, "Unbekannt") == 0) ? -1.0 : atof(preis_str);
             buecher[count++] = buch;
         }
     }
     fclose(file);
 
+    load_ausgeliehen_ids(ausgeliehen, "ausgeliehen.txt");
     int choice;
     do {
         printf("\n--- Buchverwaltung ---\n");
@@ -101,6 +41,9 @@ int main() {
         printf("2. Buch loeschen\n");
         printf("3. Alle Buecher anzeigen\n");
         printf("4. Buecher suchen\n");
+        printf("5. Buch ausleihen\n");
+        printf("6. Buch zurueckgeben\n");
+        printf("7. Ausleihstatus abfragen\n");
         printf("0. Beenden\n");
         printf("Auswahl: ");
         scanf("%d", &choice);
@@ -132,16 +75,12 @@ int main() {
                 preis[strcspn(preis, "\n")] = 0;
                 replace_comma_with_dot(preis);
 
-                if (strcmp(preis, "Unbekannt") == 0) {
-                    neues_buch.aktueller_preis = -1.0;
-                } else {
-                    neues_buch.aktueller_preis = atof(preis);
-                }
+                neues_buch.aktueller_preis = (strcmp(preis, "Unbekannt") == 0) ? -1.0 : atof(preis);
 
                 buecher[count++] = neues_buch;
-                printf("✅ Buch hinzugefuegt!\n");
+                printf("Buch hinzugefuegt!\n");
             } else {
-                printf("❌ Maximale Anzahl erreicht!\n");
+                printf("Maximale Anzahl erreicht!\n");
             }
         } else if (choice == 2) {
             char suchbegriff[200];
@@ -154,19 +93,20 @@ int main() {
                 if (strcmp(buecher[i].titel, suchbegriff) == 0 || strcmp(buecher[i].isbn, suchbegriff) == 0) {
                     for (int j = i; j < count - 1; j++) {
                         buecher[j] = buecher[j + 1];
+                        ausgeliehen[j] = ausgeliehen[j + 1];
                     }
                     count--;
                     gefunden = true;
-                    printf("🗑️ Buch geloescht!\n");
+                    printf("Buch geloescht!\n");
                     break;
                 }
             }
             if (!gefunden) {
-                printf("❗ Kein Buch mit diesem Titel oder dieser ISBN gefunden.\n");
+                printf("Kein Buch mit diesem Titel oder dieser ISBN gefunden.\n");
             }
         } else if (choice == 3) {
             for (int i = 0; i < count; i++) {
-                printf("\nBuch %d:\n", i + 1);
+                printf("\nBuch %d:\n", i);
                 printf("Autor: %s\n", buecher[i].autor);
                 printf("Erscheinungsjahr: %d\n", buecher[i].erscheinungsjahr);
                 printf("Titel: %s\n", buecher[i].titel);
@@ -243,15 +183,58 @@ int main() {
                     }
                     break;
                 default:
-                    printf("❌ Ungueltige Auswahl.\n");
+                    printf("Ungueltige Auswahl.\n");
                     break;
             }
             if (!gefunden) {
-                printf("🔍 Kein passendes Buch gefunden.\n");
+                printf("Kein passendes Buch gefunden.\n");
+            }
+        } else if (choice == 5) {
+            int id;
+            printf("Buch-ID zum Ausleihen eingeben: ");
+            scanf("%d", &id);
+            if (id >= 0 && id < count) {
+                if (!ausgeliehen[id]) {
+                    ausgeliehen[id] = true;
+                    printf("Buch '%s' (ID %d) wurde ausgeliehen.\n", buecher[id].titel, id);
+                } else {
+                    printf("Buch '%s' (ID %d) ist bereits ausgeliehen.\n", buecher[id].titel, id);
+                }
+            } else {
+                printf("Ungueltige ID.\n");
+            }
+        } else if (choice == 6) {
+            int id;
+            printf("Buch-ID zum Zurueckgeben eingeben: ");
+            scanf("%d", &id);
+            if (id >= 0 && id < count) {
+                if (ausgeliehen[id]) {
+                    ausgeliehen[id] = false;
+                    printf("Buch '%s' (ID %d) wurde zurueckgegeben.\n", buecher[id].titel, id);
+                } else {
+                    printf("Buch '%s' (ID %d) war nicht ausgeliehen.\n", buecher[id].titel, id);
+                }
+            } else {
+                printf("Ungueltige ID.\n");
+            }
+        } else if (choice == 7) {
+            int id;
+            printf("Buch-ID zum Statuscheck eingeben: ");
+            scanf("%d", &id);
+            if (id >= 0 && id < count) {
+                if (ausgeliehen[id]) {
+                    printf("Buch '%s' (ID %d) ist ausgeliehen.\n", buecher[id].titel, id);
+                } else {
+                    printf("Buch '%s' (ID %d) ist verfuegbar.\n", buecher[id].titel, id);
+                }
+            } else {
+                printf("Ungueltige ID.\n");
             }
         }
+
     } while (choice != 0);
 
     write_books_to_file(buecher, count, "buchliste_neu.csv");
+    save_ausgeliehen_ids(ausgeliehen, count, "ausgeliehen.txt");
     return 0;
 }
