@@ -74,3 +74,35 @@ void load_ausgeliehen_ids(bool ausgeliehen[], const char* filename) {
     }
     fclose(f);
 }
+double stringindouble(const char *str) {
+    double result = 0.0;
+    double factor = 1.0;
+    int decimal_found = 0;
+    double divisor = 10.0;
+
+    // Falls ein Minuszeichen am Anfang steht
+    if (*str == '-') {
+        factor = -1.0;
+        str++;
+    }
+
+    while (*str) {
+        if (*str == '.') {
+            decimal_found = 1;
+        } else if (*str >= '0' && *str <= '9') {
+            int digit = *str - '0';
+            if (!decimal_found) {
+                result = result * 10.0 + digit;
+            } else {
+                result = result + digit / divisor;
+                divisor *= 10.0;
+            }
+        } else {
+            // ungültiges Zeichen → abbrechen
+            break;
+        }
+        str++;
+    }
+
+    return result * factor;
+}

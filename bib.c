@@ -75,7 +75,7 @@ int main() {
                 preis[strcspn(preis, "\n")] = 0;
                 replace_comma_with_dot(preis);
 
-                neues_buch.aktueller_preis = (strcmp(preis, "Unbekannt") == 0) ? -1.0 : atof(preis);
+                neues_buch.aktueller_preis = (strcmp(preis, "Unbekannt") == 0) ? -1.0 : stringindouble(preis);
 
                 buecher[count++] = neues_buch;
                 printf("Buch hinzugefuegt!\n");
