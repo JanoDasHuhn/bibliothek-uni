@@ -27,7 +27,7 @@ int main() {
             buch.erscheinungsjahr = extract_year(date_str);
             strcpy(buch.titel, titel_temp);
             replace_comma_with_dot(preis_str);
-            buch.aktueller_preis = (strcmp(preis_str, "Unbekannt") == 0) ? -1.0 : atof(preis_str);
+            buch.aktueller_preis = (strcmp(preis_str, "Unbekannt") == 0) ? -1.0 : stringindouble(preis_str);
             buecher[count++] = buch;
         }
     }
