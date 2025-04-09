@@ -1,4 +1,4 @@
-#ifndef BUCH_H
+
 #define BUCH_H
 
 #include <stdbool.h>
@@ -21,4 +21,3 @@ void write_books_to_file(struct Buch buecher[], int count, const char *filename)
 void save_ausgeliehen_ids(const bool ausgeliehen[], int count, const char* filename);
 void load_ausgeliehen_ids(bool ausgeliehen[], const char* filename);
 double stringindouble(const char *str);
-#endif // BUCH_H
