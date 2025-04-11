@@ -3,9 +3,9 @@
 #include <string.h>
 #include "buch.h"
 
-bool ausgeliehen[MAX_BUCHER] = {false};
+bool ausgeliehen[MAX_BUCHER] = {false}; // Array für den Ausleihstatus
 
-void replace_comma_with_dot(char *str) {
+void replace_comma_with_dot(char *str) { // ersetzt Punkte mit Kommas
     for (int i = 0; str[i] != '\0'; i++) {
         if (str[i] == ',') {
             str[i] = '.';
@@ -13,7 +13,7 @@ void replace_comma_with_dot(char *str) {
     }
 }
 
-int extract_year(const char *date_str) {
+int extract_year(const char *date_str) { //filtert das Jahr raus
     int day, month, year;
     while (*date_str == ' ') date_str++;
     if (strlen(date_str) < 8) return -1;
@@ -26,7 +26,7 @@ int extract_year(const char *date_str) {
     return -1;
 }
 
-void write_books_to_file(struct Buch buecher[], int count, const char *filename) {
+void write_books_to_file(struct Buch buecher[], int count, const char *filename) { //schreibt die Buchliste in eine CSV-Datei
     FILE *outfile = fopen(filename, "w");
     if (outfile == NULL) {
         printf("Fehler beim Offnen der Datei %s zum Schreiben!\n", filename);
@@ -48,7 +48,7 @@ void write_books_to_file(struct Buch buecher[], int count, const char *filename)
     printf("Die aktualisierte Buchliste wurde in \"%s\" gespeichert.\n", filename);
 }
 
-void save_ausgeliehen_ids(const bool ausgeliehen[], int count, const char* filename) {
+void save_ausgeliehen_ids(const bool ausgeliehen[], int count, const char* filename) { // speichert die asugeliehen Bücher ids in einer Datei
     FILE* f = fopen(filename, "w");
     if (!f) {
         printf("Fehler beim Schreiben der Datei %s!\n", filename);
@@ -63,7 +63,7 @@ void save_ausgeliehen_ids(const bool ausgeliehen[], int count, const char* filen
     printf("Ausgeliehene Buch-IDs wurden in \"%s\" gespeichert.\n", filename);
 }
 
-void load_ausgeliehen_ids(bool ausgeliehen[], const char* filename) {
+void load_ausgeliehen_ids(bool ausgeliehen[], const char* filename) { // lädt die ausgeliehenen Bücher ids aus einer Datei
     FILE* f = fopen(filename, "r");
     if (!f) return;
     int id;
@@ -74,7 +74,7 @@ void load_ausgeliehen_ids(bool ausgeliehen[], const char* filename) {
     }
     fclose(f);
 }
-double stringindouble(const char *str) {
+double stringindouble(const char *str) { // wandelt einen String in eine double Zahl um
     double result = 0.0;
     double factor = 1.0;
     int decimal_found = 0;
@@ -98,7 +98,7 @@ double stringindouble(const char *str) {
                 divisor *= 10.0;
             }
         } else {
-            // ungültiges Zeichen → abbrechen
+            // bei unerwartet zeiche abrechen
             break;
         }
         str++;

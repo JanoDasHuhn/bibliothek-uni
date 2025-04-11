@@ -3,26 +3,26 @@
 #include <string.h>
 #include "buch.h"
 
-int main() {
+int main() { //csv Datei öffnen
     FILE* file = fopen("buchliste_origin.csv", "r");
     if (file == NULL) {
         printf("Fehler beim Offnen der Datei buchliste_origin.csv!\n");
         return 1;
     }
-
+//Array zum speichern der Bücher und Zählen der gelesenen Bücher
     struct Buch buecher[MAX_BUCHER];
     int count = 0;
     char line[256];
 
-    fgets(line, sizeof(line), file); // Header-Zeile ignorieren
+    fgets(line, sizeof(line), file);
 
-    while (fgets(line, sizeof(line), file) && count < MAX_BUCHER) {
+    while (fgets(line, sizeof(line), file) && count < MAX_BUCHER) { //csv Datei zeilenweise auslesen
         struct Buch buch;
-        char date_str[20];
+        char date_str[20];  //strings für die jeweiligen daten (title, datum usw)
         char preis_str[20];
         char titel_temp[200];
 
-        if (sscanf(line, "%99[^;];%19[^;];\"%199[^\"]\";%13[^;];%19s",
+        if (sscanf(line, "%99[^;];%19[^;];\"%199[^\"]\";%13[^;];%19s", //zerlegen der Zeilen
                    buch.autor, date_str, titel_temp, buch.isbn, preis_str) == 5) {
             buch.erscheinungsjahr = extract_year(date_str);
             strcpy(buch.titel, titel_temp);
@@ -32,7 +32,7 @@ int main() {
         }
     }
     fclose(file);
-
+// Menü und ausleihstatus
     load_ausgeliehen_ids(ausgeliehen, "ausgeliehen.txt");
     int choice;
     do {
@@ -49,7 +49,7 @@ int main() {
         scanf("%d", &choice);
         getchar();
 
-        if (choice == 1) {
+        if (choice == 1) { // Buch hinzufügen
             if (count < MAX_BUCHER) {
                 struct Buch neues_buch;
                 printf("Autor: ");
@@ -82,7 +82,7 @@ int main() {
             } else {
                 printf("Maximale Anzahl erreicht!\n");
             }
-        } else if (choice == 2) {
+        } else if (choice == 2) { // Buch löschen
             char suchbegriff[200];
             printf("Gib den Titel oder die ISBN des zu loeschenden Buchs ein: ");
             fgets(suchbegriff, sizeof(suchbegriff), stdin);
@@ -128,7 +128,7 @@ int main() {
             scanf("%d", &suchwahl);
             getchar();
 
-            switch (suchwahl) {
+            switch (suchwahl) { // Suche nach Autor, Jahr, Titel, ISBN oder Preis
                 case 1:
                     printf("Autor eingeben: ");
                     fgets(suchtext, sizeof(suchtext), stdin);
@@ -189,7 +189,7 @@ int main() {
             if (!gefunden) {
                 printf("Kein passendes Buch gefunden.\n");
             }
-        } else if (choice == 5) {
+        } else if (choice == 5) { // Buch ausleihen
             int id;
             printf("Buch-ID zum Ausleihen eingeben: ");
             scanf("%d", &id);
@@ -203,7 +203,7 @@ int main() {
             } else {
                 printf("Ungueltige ID.\n");
             }
-        } else if (choice == 6) {
+        } else if (choice == 6) { // Buch zurückgeben
             int id;
             printf("Buch-ID zum Zurueckgeben eingeben: ");
             scanf("%d", &id);
@@ -217,7 +217,7 @@ int main() {
             } else {
                 printf("Ungueltige ID.\n");
             }
-        } else if (choice == 7) {
+        } else if (choice == 7) { // Ausleihstatus abfragen
             int id;
             printf("Buch-ID zum Statuscheck eingeben: ");
             scanf("%d", &id);
@@ -234,7 +234,7 @@ int main() {
 
     } while (choice != 0);
 
-    write_books_to_file(buecher, count, "buchliste_neu.csv");
-    save_ausgeliehen_ids(ausgeliehen, count, "ausgeliehen.txt");
+    write_books_to_file(buecher, count, "buchliste_neu.csv"); //speichern der neuen Buchliste
+    save_ausgeliehen_ids(ausgeliehen, count, "ausgeliehen.txt"); //speichern der ausgeliehenen Bücher
     return 0;
 }
